@@ -10,3 +10,4 @@ stacktrace.log
 .idea
 *.zip
 *.iml
+*.sha1

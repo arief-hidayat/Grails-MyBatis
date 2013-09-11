@@ -49,7 +49,6 @@ class MappingSupport {
     def dataSourceToUse = GrailsClassUtils.getStaticPropertyValue(grailsClass, 'dataSourceName') ?: 'dataSource'
 
     def sessionTemplate = application.mainContext.getBean("sqlSessionTemplate_$dataSourceToUse")
-
     return sessionTemplate."$opName"(id, args)
   }
 

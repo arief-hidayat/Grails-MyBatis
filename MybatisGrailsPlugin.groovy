@@ -7,9 +7,12 @@ import org.grails.plugins.mybatis.MappingSupport
 import org.grails.plugins.mybatis.GatewayArtefactHandler
 import org.grails.plugins.mybatis.TypeHandlerArtefactHandler
 import org.grails.plugins.mybatis.locking.OptimisticLockingInterceptor
+import org.springframework.core.io.ClassPathResource
+import org.springframework.core.io.FileSystemResource
+import org.springframework.core.io.Resource
 
 class MybatisGrailsPlugin {
-  def version = "0.0.2"
+  def version = "0.0.3-SNAPSHOT"
   def grailsVersion = "2.0 > *"
   def dependsOn = [:]
   def pluginExcludes = [
@@ -96,6 +99,14 @@ The MyBatis plugin enables Grails integration with MyBatis ORM framework
     dataSourcesNames.each { dataSourceName ->
       log.debug "Registering $TypeHandlerArtefactHandler.TYPE instances for dataSource: $dataSourceName ..."
 
+        log.debug "checking configLocation ${application.config.mybatis.configLocation}."
+        Resource configLocRes =null
+        if(application.config.mybatis.configLocation) {
+            configLocRes = getResource("${application.config.mybatis.configLocation}")
+            if(configLocRes.exists()) {
+                log.debug "set configLocation ${application.config.mybatis.configLocation}"
+            } else log.warn("configLocation ${application.config.mybatis.configLocation} is not exist")
+        }
       def typeHandlerTypes = typeHandlerArtefacts.findAll { artefact ->
         dataSourceName ==  GrailsClassUtils.getStaticPropertyValue(artefact.clazz, 'dataSourceName') ?: dataSourceName
       }
@@ -129,11 +140,21 @@ The MyBatis plugin enables Grails integration with MyBatis ORM framework
 
           databaseIdProvider = provider
         }
+        if(configLocRes) configLocation  =  configLocRes
       }
 
       "sqlSessionTemplate_$dataSourceName"(org.mybatis.spring.SqlSessionTemplate, ref("sqlSessionFactoryBean_$dataSourceName"))
     }
   }
+    private Resource getResource(String name) {
+        def resource = new FileSystemResource("$name")
+
+        if (!resource.exists()) {
+            resource = new ClassPathResource(name)
+        }
+
+        return resource
+    }
 
   def doWithDynamicMethods = { ctx ->
     GrailsClass[] gateways = application.getArtefacts(GatewayArtefactHandler.TYPE)
